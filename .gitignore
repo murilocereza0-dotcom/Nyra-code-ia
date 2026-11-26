@@ -1,0 +1,13 @@
+chave.txt
+.env
+.env.*
+node_modules/
+*.log
+*.antes-*
+acab.html
+calc.py
+p1.txt
+p2.txt
+polida.html
+vidro.html
+icone.js
