@@ -52,6 +52,54 @@ footer{padding-bottom:max(6px,env(safe-area-inset-bottom))}
 #menu{padding-top:max(14px,env(safe-area-inset-top))}
 body{padding-bottom:env(keyboard-inset-height,0px)}
 body{background-color:#05020a}
+.linha {
+  position: relative;
+}
+
+#mais {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  font-size: 24px;
+  cursor: pointer;
+transform: translate(-2px, -3px);
+}
+
+#menu-mais {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 100;
+  width: 220px;
+  padding: 14px;
+  border: 1px solid #7544a8;
+  border-radius: 14px;
+  background: #10091b;
+  box-shadow: 0 8px 25px #0008;
+}
+
+#menu-mais[hidden] {
+  display: none !important;
+}
+
+#think-opcao {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  color: #d8b4fe;
+}
+
+#think-opcao input {
+  accent-color: #a855f7;
+}
+
+#menu-mais small {
+  display: block;
+  margin-top: 8px;
+  color: #aaa;
+  font-size: 11px;
+}
 </style>
 </head>
 <body>
@@ -69,7 +117,25 @@ body{background-color:#05020a}
       <option value="">Linguagem automática</option>
       <option>HTML e CSS</option><option>JavaScript</option><option>Python</option><option>Java</option><option>Rust</option><option>C++</option>
     </select>
-    <button id="enviar">Enviar</button>
+      <button type="button" id="mais">+</button>
+
+<div id="menu-mais" hidden>
+  <button type="button" id="mais">+</button>
+
+<div id="menu-mais" hidden>
+  <label id="think-opcao">
+    <input id="think" type="checkbox">
+    <span>🧠 Pensar mais</span>
+  </label>
+  <small>Faz uma análise mais profunda antes de responder.</small>
+</div>
+    <input id="think" type="checkbox">
+    <span>🧠 Pensar mais</span>
+  </label>
+  <small>Faz uma análise mais profunda antes de responder.</small>
+</div>
+</label>
+<button id="enviar">Enviar</button>
   </div>
 </form>
 <footer><span id="status">Conectando...</span><span id="modelo"></span></footer>
@@ -98,6 +164,13 @@ body{background-color:#05020a}
 
 <script>
 const $ = (id) => document.getElementById(id);
+$('mais').onclick = () => {
+  $('menu-mais').hidden = !$('menu-mais').hidden;
+};
+
+$('think').onchange = () => {
+  $('menu-mais').hidden = true;
+};
 const ler = (chave, padrao) => { try { return JSON.parse(localStorage.getItem(chave)) ?? padrao; } catch { return padrao; } };
 const gravar = (chave, valor) => { try { localStorage.setItem(chave, JSON.stringify(valor)); } catch {} };
 
@@ -217,7 +290,11 @@ async function enviar(pergunta) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: parar.signal,
-      body: JSON.stringify({ ...config, mensagens: conversa.mensagens })
+      body: JSON.stringify({
+  ...config,
+  mensagens: conversa.mensagens,
+  pensar: $('think').checked
+})
     });
     if (!r.ok) throw new Error(await r.text());
     const leitor = r.body.pipeThrough(new TextDecoderStream()).getReader();
