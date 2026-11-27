@@ -1,0 +1,30 @@
+<!--codigo-->
+<script>
+(() => {
+  const antes = formatar;
+  formatar = (el, texto) => {
+    antes(el, texto);
+    const partes = texto.split(/^[ \t]*```/m);
+    el.querySelectorAll('pre').forEach((pre, i) => {
+      const lingua = (partes[i * 2 + 1].match(/^([\w+#-]*)\n/) || [])[1] || 'código';
+      const com = /^(py|python|bash|sh|shell|yaml)$/i.test(lingua) ? '#.*' : '\\/\\/.*|\\/\\*[\\s\\S]*?\\*\\/|<!--[\\s\\S]*?-->';
+      const re = new RegExp('(' + com + ')|("(?:\\\\.|[^"\\\\\\n])*"|\'(?:\\\\.|[^\'\\\\\\n])*\')|\\b(const|let|var|function|return|if|else|for|while|in|def|class|import|from|new|async|await|public|static|void|True|False|None|true|false|null)\\b|\\b(\\d+(?:\\.\\d+)?)\\b', 'g');
+      const codigo = pre.textContent;
+      let fim = 0;
+      pre.textContent = '';
+      for (const m of codigo.matchAll(re)) {
+        pre.append(codigo.slice(fim, m.index), elemento('span', m[1] ? 'c' : m[2] ? 's' : m[3] ? 'k' : 'n', m[0]));
+        fim = m.index + m[0].length;
+      }
+      pre.append(codigo.slice(fim));
+      const bloco = elemento('div', 'bloco'), topo = elemento('div', 'topo');
+      const copia = pre.nextSibling;
+      pre.before(bloco);
+      topo.append(elemento('span', '', lingua), copia);
+      bloco.append(topo, pre);
+    });
+  };
+  desenhar();
+})();
+</script>
+<!--/codigo-->

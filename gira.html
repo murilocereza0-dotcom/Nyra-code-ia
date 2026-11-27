@@ -1,0 +1,27 @@
+<!--gira-->
+<style>
+@keyframes girar{to{transform:rotate(360deg)}}
+@keyframes surgir{from{opacity:0;transform:translateY(8px)}}
+body:has(#processando[style*="block"]) #chat>.assistant:last-child .quem svg{animation:girar 1.1s linear infinite;filter:drop-shadow(0 0 7px #a855f7)}
+#chat>div:last-child{animation:surgir .3s ease-out}
+button:active{transform:scale(.94)}
+button,select{transition:transform .12s,background .2s}
+input[type=checkbox]{accent-color:#a855f7;width:18px;height:18px;flex:none}
+.nyra-pop{background:#170e2bf2!important;border:1px solid #ffffff14!important;border-radius:20px!important;box-shadow:0 12px 32px #000a!important;padding:14px 16px!important}
+.nyra-pop label{display:flex;align-items:center;gap:10px;font-weight:600}
+.nyra-pop p,.nyra-pop small{margin:6px 0 0;font-size:.85em;color:#9d8fbb}
+</style>
+<script>
+(() => {
+  const marca = [...document.querySelectorAll('input[type=checkbox]')].find((c) => (c.closest('label') || c.parentElement).textContent.includes('Pensar mais'));
+  if (!marca) return;
+  const mais = [...document.querySelectorAll('button')].filter((b) => b.id !== 'novo' && b.textContent.trim() === '+');
+  let pop = marca.parentElement;
+  while (pop.parentElement && !mais.some((b) => pop.contains(b))) pop = pop.parentElement;
+  const dentro = mais.filter((b) => pop.contains(b)), fora = mais.filter((b) => !pop.contains(b));
+  if (!dentro.length || !fora.length || pop.contains(document.getElementById('campo'))) return;
+  pop.classList.add('nyra-pop');
+  dentro.forEach((b) => b.style.display = 'none');
+})();
+</script>
+<!--/gira-->

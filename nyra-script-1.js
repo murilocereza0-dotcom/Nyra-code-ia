@@ -1,0 +1,1 @@
+if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = true;

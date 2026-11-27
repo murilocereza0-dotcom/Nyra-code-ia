@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>NYRA CODE AI</title><meta name="color-scheme" content="dark"><meta name="theme-color" content="#05020a"><link rel="manifest" href="/manifest.json"><link rel="icon" type="image/png" href="/icone.png">
+<style>
+:root{--fonte:15px;--roxo:#a855f7;--ciano:#22d3ee;--linha:#2a1a47;--apagado:#9d8fbb}
+*{box-sizing:border-box;margin:0}
+body{background:radial-gradient(circle at 80% 0,#170a2e,#05020a 55%);color:#eee6ff;font:var(--fonte)/1.55 system-ui,sans-serif;height:100dvh;display:flex;flex-direction:column}
+button,select,input,textarea{font:inherit;color:inherit}
+button,select{background:#100a1e;border:1px solid var(--linha);border-radius:10px;padding:8px 14px;cursor:pointer}
+button:disabled{opacity:.4}
+header{display:flex;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--linha)}
+header button{font-size:20px;width:44px;height:44px;padding:0}
+#titulo{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:2px solid var(--roxo);padding:8px 2px}
+#titulo::before{content:"◆";color:var(--ciano);margin-right:8px}
+#chat{flex:1;overflow-y:auto;padding:14px}
+.vazio{text-align:center;margin-top:18vh;color:var(--apagado)}
+.vazio svg{width:76px;height:76px}
+.vazio h1{color:#d8b4fe;letter-spacing:4px;font-size:20px;text-shadow:0 0 14px var(--roxo)}
+.quem{display:flex;gap:8px;align-items:center;margin:14px 0 6px;color:#d8b4fe;font-weight:600}
+.quem time{font-weight:400;font-size:.8em;color:var(--apagado)}
+.quem svg{width:28px;height:28px}
+.user .quem{justify-content:flex-end;color:var(--ciano)}
+.texto{white-space:pre-wrap;overflow-wrap:anywhere}
+.user .texto{background:linear-gradient(135deg,#2b1250,#1a0b30);border:1px solid #4c2889;border-radius:16px 16px 3px 16px;padding:12px 16px}
+.assistant .texto{border-left:2px solid var(--roxo);padding-left:12px}
+pre{background:#000;border:1px solid #164e63;border-radius:10px;padding:10px;margin:6px 0;overflow-x:auto;white-space:pre;overflow-wrap:normal;font-size:.87em}
+.acoes{display:flex;gap:8px;margin-top:8px}
+.acoes button,pre+button{font-size:.85em;color:var(--apagado)}
+.assistant:not(:last-child) .continuar{display:none}
+#processando{display:none;padding:0 16px 8px;color:#d8b4fe}
+#caixa{margin:0 12px 10px;border:1px solid var(--linha);border-radius:18px;padding:10px;background:#0b0616}
+#campo{width:100%;background:none;border:0;outline:0;resize:none;padding:4px}
+.linha{display:flex;justify-content:space-between;gap:8px}
+#enviar{border-color:var(--roxo);font-weight:700;min-width:96px}
+footer{display:flex;justify-content:space-between;gap:8px;padding:6px 12px;border-top:1px solid var(--linha);font:11px monospace;color:var(--apagado)}
+dialog{background:#0b0616;color:inherit;border:1px solid var(--roxo);box-shadow:0 0 30px #a855f755;max-height:100dvh}
+dialog::backdrop{background:#000a}
+#menu{margin:0 auto 0 0;height:100dvh;width:min(310px,85vw);padding:14px}
+#config{margin:auto;width:min(360px,92vw);border-radius:16px;padding:18px}
+dialog button,#config select,#config input,#config textarea{width:100%;margin-top:6px}
+#config input[type=text],#config textarea{background:#100a1e;border:1px solid var(--linha);border-radius:10px;padding:8px}
+#config label{display:block;margin-top:12px;accent-color:var(--roxo)}
+.conversa{display:flex;gap:6px}
+.conversa button:first-child{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conversa button:last-child{width:46px;flex:none}
+.conversa.atual button:first-child{border-color:var(--roxo)}
+header{padding-top:max(8px,env(safe-area-inset-top))}
+footer{padding-bottom:max(6px,env(safe-area-inset-bottom))}
+#menu{padding-top:max(14px,env(safe-area-inset-top))}
+body{padding-bottom:env(keyboard-inset-height,0px)}
+body{background-color:#05020a}
+</style>
+</head>
+<body>
+<header>
+  <button id="abrirMenu" aria-label="Menu">☰</button>
+  <div id="titulo"></div>
+  <button id="novo" aria-label="Nova conversa">+</button>
+</header>
+<main id="chat"></main>
+<div id="processando"></div>
+<form id="caixa">
+  <textarea id="campo" rows="2" placeholder="Peça algo ou cole seu código..."></textarea>
+  <div class="linha">
+    <select id="linguagem">
+      <option value="">Linguagem automática</option>
+      <option>HTML e CSS</option><option>JavaScript</option><option>Python</option><option>Java</option><option>Rust</option><option>C++</option>
+    </select>
+    <button id="enviar">Enviar</button>
+  </div>
+</form>
+<footer><span id="status">Conectando...</span><span id="modelo"></span></footer>
+
+<dialog id="menu">
+  <button data-fechar>✕ Fechar</button>
+  <button id="abrirConfig">⚙️ Configurações</button>
+  <p style="margin-top:14px;color:var(--apagado)">Conversas</p>
+  <div id="lista"></div>
+</dialog>
+
+<dialog id="config">
+  <h2>Configurações</h2>
+  <label>Seu nome<input id="nome" type="text" maxlength="30"></label>
+  <label>Tamanho das respostas
+    <select id="tamanho"><option value="curta">Curta</option><option value="normal">Normal</option><option value="detalhada">Detalhada</option></select></label>
+  <label>Criatividade: <output id="valor"></output><input id="criatividade" type="range" min="0" max="1" step="0.1"></label>
+  <label>Tamanho da letra
+    <select id="fonte"><option value="13px">Pequena</option><option value="15px">Média</option><option value="18px">Grande</option></select></label>
+  <label>Instruções para a Nyra<textarea id="extra" rows="3" maxlength="500" placeholder="Ex.: explique como se eu fosse iniciante"></textarea></label>
+  <button id="apagarTudo">🗑️ Apagar todas as conversas</button>
+  <button data-fechar>Salvar e fechar</button>
+</dialog>
+
+<template id="logo"><svg viewBox="0 0 48 48"><path d="M24 3 42 13.5v21L24 45 6 34.5v-21Z" fill="#1b0b33" stroke="#a855f7" stroke-width="2.5"/><path d="M16 33V16l16 17V19" fill="none" stroke="#e9d5ff" stroke-width="4"/><path d="m32 10 3.5 3.5L32 17l-3.5-3.5Z" fill="#22d3ee"/></svg></template>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const ler = (chave, padrao) => { try { return JSON.parse(localStorage.getItem(chave)) ?? padrao; } catch { return padrao; } };
+const gravar = (chave, valor) => { try { localStorage.setItem(chave, JSON.stringify(valor)); } catch {} };
+
+const config = Object.assign({ nome: '', tamanho: 'normal', criatividade: 0.3, fonte: '15px', extra: '', linguagem: '' }, ler('nyra-config', {}));
+let conversas = ler('nyra-conversas', []);
+let atual = conversas[0] || { mensagens: [] };
+let parar = null;
+
+const elemento = (tag, classe, texto) => {
+  const el = document.createElement(tag);
+  if (classe) el.className = classe;
+  if (texto !== undefined) el.textContent = texto;
+  return el;
+};
+const logo = () => $('logo').content.firstElementChild.cloneNode(true);
+const salvar = () => gravar('nyra-conversas', conversas);
+const rolar = () => $('chat').scrollTop = $('chat').scrollHeight;
+
+function copiar(botao, texto) {
+  navigator.clipboard.writeText(texto).then(() => {
+    const antes = botao.textContent;
+    botao.textContent = 'Copiado!';
+    setTimeout(() => botao.textContent = antes, 1500);
+  });
+}
+function botao(texto, acao, classe) {
+  const b = elemento('button', classe, texto);
+  b.type = 'button';
+  b.onclick = () => acao(b);
+  return b;
+}
+function formatar(el, texto) {
+  el.textContent = '';
+  texto.split('```').forEach((parte, i) => {
+    if (i % 2 === 0) return el.append(parte);
+    const codigo = parte.replace(/^[\w+#-]*\n/, '');
+    el.append(elemento('pre', '', codigo), botao('Copiar código', (b) => copiar(b, codigo)));
+  });
+}
+function desenharMensagem(m) {
+  const caixa = elemento('div', m.role);
+  const quem = elemento('div', 'quem');
+  if (m.role === 'assistant') quem.append(logo(), 'Nyra');
+  else quem.append(config.nome || 'Você');
+  quem.append(elemento('time', '', m.hora));
+  const texto = elemento('div', 'texto');
+  if (m.role === 'assistant') formatar(texto, m.content);
+  else texto.textContent = m.content;
+  caixa.append(quem, texto);
+  $('chat').append(caixa);
+  return { caixa, texto };
+}
+function acoes(caixa, m) {
+  const div = elemento('div', 'acoes');
+  div.append(
+    botao('Copiar resposta', (b) => copiar(b, m.content)),
+    botao('Continuar', () => enviar('Continue a resposta anterior exatamente de onde parou, sem repetir o que já foi escrito.'), 'continuar'));
+  caixa.append(div);
+}
+function desenhar() {
+  $('chat').textContent = '';
+  $('titulo').textContent = atual.mensagens[0]?.content || 'Nova conversa';
+  if (!atual.mensagens.length) {
+    const v = elemento('div', 'vazio');
+    v.append(logo(), elemento('h1', '', 'NYRA CODE AI'), elemento('p', '', 'Beyond the code.'));
+    return $('chat').append(v);
+  }
+  for (const m of atual.mensagens) {
+    const { caixa } = desenharMensagem(m);
+    if (m.role === 'assistant') acoes(caixa, m);
+  }
+  rolar();
+}
+function listar() {
+  $('lista').textContent = '';
+  for (const c of conversas) {
+    const linha = elemento('div', 'conversa' + (c === atual ? ' atual' : ''));
+    linha.append(
+      botao(c.mensagens[0]?.content || 'Conversa', () => { trocar(c); $('menu').close(); }),
+      botao('✕', () => {
+        if (!confirm('Apagar essa conversa?')) return;
+        conversas = conversas.filter((x) => x !== c);
+        if (c === atual) trocar({ mensagens: [] });
+        salvar();
+        listar();
+      }));
+    $('lista').append(linha);
+  }
+}
+function trocar(c) {
+  parar?.abort();
+  atual = c;
+  desenhar();
+}
+
+async function enviar(pergunta) {
+  if (parar || !pergunta) return;
+  const conversa = atual;
+  const hora = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  if (!conversa.mensagens.length) conversas.unshift(conversa);
+  conversa.mensagens.push({ role: 'user', content: pergunta, hora: hora() });
+  salvar();
+  desenhar();
+  const resposta = { role: 'assistant', content: '', hora: hora() };
+  const { caixa, texto } = desenharMensagem(resposta);
+  parar = new AbortController();
+  $('enviar').textContent = 'Parar';
+  const inicio = Date.now();
+  const relogio = () => $('processando').textContent = 'Nyra está processando há ' + Math.round((Date.now() - inicio) / 1000) + 's';
+  relogio();
+  const timer = setInterval(relogio, 1000);
+  $('processando').style.display = 'block';
+  rolar();
+  let erro = '';
+  try {
+    const r = await fetch('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: parar.signal,
+      body: JSON.stringify({ ...config, mensagens: conversa.mensagens })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    const leitor = r.body.pipeThrough(new TextDecoderStream()).getReader();
+    while (true) {
+      const { value, done } = await leitor.read();
+      if (done) break;
+      const noFim = $('chat').scrollHeight - $('chat').scrollTop - $('chat').clientHeight < 80;
+      resposta.content += value;
+      formatar(texto, resposta.content);
+      if (noFim) rolar();
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') erro = e.message;
+  }
+  clearInterval(timer);
+  $('processando').style.display = 'none';
+  $('enviar').textContent = 'Enviar';
+  parar = null;
+  if (resposta.content) {
+    conversa.mensagens.push(resposta);
+    acoes(caixa, resposta);
+  }
+  if (erro) texto.append(elemento('p', '', 'Deu ruim: ' + erro));
+  else if (!resposta.content) texto.textContent = 'Sem resposta.';
+  salvar();
+}
+
+$('caixa').onsubmit = (e) => {
+  e.preventDefault();
+  if (parar) return parar.abort();
+  const pergunta = $('campo').value.trim();
+  $('campo').value = '';
+  enviar(pergunta);
+};
+$('novo').onclick = () => trocar({ mensagens: [] });
+$('abrirMenu').onclick = () => { listar(); $('menu').showModal(); };
+$('abrirConfig').onclick = () => { $('menu').close(); $('config').showModal(); };
+document.querySelectorAll('[data-fechar]').forEach((b) => b.onclick = () => b.closest('dialog').close());
+$('config').onclose = desenharSeParado;
+function desenharSeParado() { if (!parar) desenhar(); }
+$('apagarTudo').onclick = () => {
+  if (!confirm('Apagar TODAS as conversas?')) return;
+  conversas = [];
+  salvar();
+  trocar({ mensagens: [] });
+};
+function aplicar() {
+  document.documentElement.style.setProperty('--fonte', config.fonte);
+  $('valor').textContent = config.criatividade;
+}
+for (const chave of Object.keys(config)) {
+  $(chave).value = config[chave];
+  $(chave).oninput = () => {
+    config[chave] = $(chave).value;
+    gravar('nyra-config', config);
+    aplicar();
+  };
+}
+fetch('/status').then((r) => r.json()).then((s) => {
+  $('status').textContent = s.chave ? '● Servidor ligado, API configurada' : '● Falta a chave da Groq';
+  $('modelo').textContent = s.modelo;
+}).catch(() => $('status').textContent = '● Servidor desligado');
+aplicar();
+desenhar();
+</script>
+<script>if (navigator.virtualKeyboard) navigator.virtualKeyboard.overlaysContent = true;</script>
+<!--polida-->
+<style>
+header{border:0;gap:4px}
+header button{background:none;border:0}
+#titulo{border:0;text-align:center;font-weight:600}
+#titulo::before{content:none}
+#chat{padding:8px 18px 16px}
+.user .quem{font-size:.8em;margin:18px 4px 4px}
+.user .texto{width:fit-content;max-width:85%;margin-left:auto;border:0;border-radius:20px;padding:10px 16px}
+.assistant .quem{margin-top:20px}
+.assistant .texto{border:0;padding:0;line-height:1.65}
+.texto strong{color:#fff}
+.texto .cab{display:block;font-size:1.15em;margin-top:6px}
+.texto :not(pre)>code{background:#1b0f33;border-radius:6px;padding:1px 6px;font-size:.9em}
+.texto hr{border:0;border-top:1px solid var(--linha)}
+pre{border-color:var(--linha);border-radius:14px;padding:14px;margin:8px 0 0}
+pre+button{display:block;margin-left:auto;background:none;border:0}
+.acoes{gap:2px;margin-top:4px}
+.acoes button{background:none;border:0;padding:8px 10px}
+#caixa{border-radius:26px;background:#120a22;margin:0 10px max(10px,env(safe-area-inset-bottom));padding:12px;box-shadow:0 -4px 24px #0009}
+#campo{display:block;field-sizing:content;min-height:2em;max-height:25dvh;padding:2px 6px 10px}
+.linha{align-items:center}
+#linguagem{border:0;border-radius:99px;background:#22143d;max-width:70%}
+#enviar{flex:none;width:44px;height:44px;min-width:0;padding:0;border:0;border-radius:50%;background:var(--roxo);font-size:0}
+#enviar::after{content:"↑";font-size:22px;color:#fff}
+#enviar.parando::after{content:"■";font-size:16px}
+footer{display:none}
+</style>
+<script>
+(() => {
+  const emLinha = (el, linha) => {
+    linha.split(/(\*\*[^*]+\*\*|`[^`]+`)/).forEach((p, i) => {
+      if (i % 2 === 0) return el.append(p);
+      if (p[0] === '`') el.append(elemento('code', '', p.slice(1, -1)));
+      else emLinha(el.appendChild(elemento('strong')), p.slice(2, -2));
+    });
+  };
+  formatar = (el, texto) => {
+    el.textContent = '';
+    texto.split(/^[ \t]*```/m).forEach((parte, i) => {
+      if (i % 2) {
+        const codigo = parte.replace(/^[\w+#-]*\n/, '');
+        return el.append(elemento('pre', '', codigo), botao('Copiar código', (b) => copiar(b, codigo)));
+      }
+      parte.replace(/^\n+|\s+$/g, '').split('\n').forEach((linha, j, todas) => {
+        const cab = linha.match(/^#{1,6}\s+(.*)/);
+        if (/^\s*---+\s*$/.test(linha)) return el.append(document.createElement('hr'));
+        if (cab) return emLinha(el.appendChild(elemento('strong', 'cab')), cab[1]);
+        emLinha(el, linha.replace(/^(\s*)[-*]\s+/, '$1• '));
+        if (j < todas.length - 1) el.append('\n');
+      });
+    });
+  };
+  const b = document.getElementById('enviar');
+  new MutationObserver(() => b.classList.toggle('parando', b.textContent === 'Parar')).observe(b, { childList: true });
+  document.getElementById('campo').rows = 1;
+  desenhar();
+})();
+</script>
+<!--/polida-->
+<!--vidro-->
+<style>
+#chat{margin-bottom:calc(-1 * var(--base,0px));padding-bottom:calc(var(--base,0px) + 12px)}
+#caixa{position:relative;z-index:1;background:#120a22d9;backdrop-filter:blur(5px);margin-bottom:max(18px,env(safe-area-inset-bottom))}
+#caixa::after{content:"";position:absolute;top:100%;left:-12px;right:-12px;height:max(20px,env(safe-area-inset-bottom));background:#05020ab3}
+#processando{padding:0 6px 6px}
+</style>
+<script>
+(() => {
+  const caixa = document.getElementById('caixa'), chat = document.getElementById('chat');
+  caixa.prepend(document.getElementById('processando'));
+  new ResizeObserver(() => {
+    const noFim = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 80;
+    document.body.style.setProperty('--base', caixa.offsetHeight + parseFloat(getComputedStyle(caixa).marginBottom) + 'px');
+    if (noFim) chat.scrollTop = chat.scrollHeight;
+  }).observe(caixa);
+})();
+</script>
+<!--/vidro-->
+<!--acab-->
+<style>
+#chat{mask-image:linear-gradient(#000 calc(100% - var(--base,0px) - 28px),#000c calc(100% - var(--base,0px) + 24px),#0007 100%)}
+#caixa{background:#170e2ba6;border:1px solid #ffffff12;backdrop-filter:blur(3px);box-shadow:0 8px 28px #0008;margin-bottom:max(12px,env(safe-area-inset-bottom))}
+#caixa::after{content:none}
+</style>
+<!--/acab-->
+</body>
+</html>

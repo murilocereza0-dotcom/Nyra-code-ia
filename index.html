@@ -447,5 +447,432 @@ footer{display:none}
 #caixa::after{content:none}
 </style>
 <!--/acab-->
+<!--mais--><script>document.querySelectorAll("button").forEach((b) => { if (b.id === "novo" || b.textContent.trim() !== "+") return; b.style.cssText += ";display:grid;place-items:center;flex:none;width:44px;height:44px;min-width:0;padding:0;margin:0;border-radius:50%;font-size:24px;line-height:1"; if (b.parentElement.classList.contains("linha")) b.style.marginLeft = "auto"; });</script><!--/mais-->
+<!--gira-->
+<style>
+@keyframes girar{to{transform:rotate(360deg)}}
+@keyframes surgir{from{opacity:0;transform:translateY(8px)}}
+body:has(#processando[style*="block"]) #chat>.assistant:last-child .quem svg{animation:girar 1.1s linear infinite;filter:drop-shadow(0 0 7px #a855f7)}
+#chat>div:last-child{animation:surgir .3s ease-out}
+button:active{transform:scale(.94)}
+button,select{transition:transform .12s,background .2s}
+input[type=checkbox]{accent-color:#a855f7;width:18px;height:18px;flex:none}
+.nyra-pop{background:#170e2bf2!important;border:1px solid #ffffff14!important;border-radius:20px!important;box-shadow:0 12px 32px #000a!important;padding:14px 16px!important}
+.nyra-pop label{display:flex;align-items:center;gap:10px;font-weight:600}
+.nyra-pop p,.nyra-pop small{margin:6px 0 0;font-size:.85em;color:#9d8fbb}
+</style>
+<script>
+(() => {
+  const marca = [...document.querySelectorAll('input[type=checkbox]')].find((c) => (c.closest('label') || c.parentElement).textContent.includes('Pensar mais'));
+  if (!marca) return;
+  const mais = [...document.querySelectorAll('button')].filter((b) => b.id !== 'novo' && b.textContent.trim() === '+');
+  let pop = marca.parentElement;
+  while (pop.parentElement && !mais.some((b) => pop.contains(b))) pop = pop.parentElement;
+  const dentro = mais.filter((b) => pop.contains(b)), fora = mais.filter((b) => !pop.contains(b));
+  if (!dentro.length || !fora.length || pop.contains(document.getElementById('campo'))) return;
+  pop.classList.add('nyra-pop');
+  dentro.forEach((b) => b.style.display = 'none');
+})();
+</script>
+<!--/gira-->
+<!--fundo--><style>
+body{background:radial-gradient(ellipse 100% 40% at 50% 42%,#180b31,#05020a) #05020a}
+#linhas{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+</style><canvas id="linhas"></canvas>
+<script>
+(() => {
+  document.querySelectorAll('meta[name=theme-color]').forEach((m) => m.content = '#05020a');
+  const c = document.getElementById('linhas'), x = c.getContext('2d');
+  const desenho = (t) => {
+    const r = devicePixelRatio || 1, l = c.clientWidth, a = c.clientHeight;
+    const w = Math.round(l * r), h = Math.round(a * r);
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    x.setTransform(r, 0, 0, r, 0, 0);
+    x.clearRect(0, 0, l, a);
+    for (let i = 0; i < 7; i++) {
+      const cor = i % 3 ? '#a855f7' : '#22d3ee';
+      x.beginPath();
+      for (let p = -3; p <= l + 3; p += 3) x.lineTo(p, a * (0.05 + i * 0.15) + Math.sin(p / 70 + t / (1400 + i * 220) + i) * 22 + Math.sin(p / 33 - t / 2100) * 5);
+      for (const [grossura, forca] of [[9, '0d'], [4, '1c'], [1.2, '80']]) {
+        x.lineWidth = grossura;
+        x.strokeStyle = cor + forca;
+        x.stroke();
+      }
+    }
+    requestAnimationFrame(desenho);
+  };
+  requestAnimationFrame(desenho);
+})();
+</script><!--/fundo--><!--bonito-->
+<style>
+#chat{mask-image:linear-gradient(#0000,#000 32px,#000 calc(100% - var(--base,0px) - 28px),#000c calc(100% - var(--base,0px) + 24px),#0007)}
+header{position:relative}
+header::after{content:"";position:absolute;left:12%;right:12%;bottom:0;height:1px;background:linear-gradient(90deg,#0000,#a855f7,#22d3ee,#0000)}
+#titulo{background:linear-gradient(90deg,#e9d5ff,#67e8f9);background-clip:text;color:transparent}
+.texto{text-shadow:0 1px 4px #000}
+.user .texto{background:linear-gradient(135deg,#4c1d95d9,#2b1250d9);box-shadow:0 4px 18px #7c3aed45}
+#enviar{background:linear-gradient(135deg,#c084fc,#7c3aed);box-shadow:0 0 18px #a855f780}
+.bloco{margin:12px 0 4px;border:1px solid #a855f755;border-radius:16px;overflow:hidden;background:#0b0618c4;backdrop-filter:blur(3px);box-shadow:0 0 22px #7c3aed30}
+.topo{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 2px 14px;background:#2a1650b3;font:600 .75em monospace;color:#c4b5fd}
+.topo button{background:none;border:0;color:#22d3ee;padding:10px}
+.bloco pre{margin:0;border:0;border-radius:0;background:none;font-size:.82em;line-height:1.7;text-shadow:none}
+.bloco .k{color:#c084fc}.bloco .s{color:#67e8f9}.bloco .c{color:#8b7db0;font-style:italic}.bloco .n{color:#f9a8d4}
+</style>
+<!--/bonito-->
+<!--codigo-->
+<script>
+(() => {
+  const antes = formatar;
+  formatar = (el, texto) => {
+    antes(el, texto);
+    const partes = texto.split(/^[ \t]*```/m);
+    el.querySelectorAll('pre').forEach((pre, i) => {
+      const lingua = (partes[i * 2 + 1].match(/^([\w+#-]*)\n/) || [])[1] || 'código';
+      const com = /^(py|python|bash|sh|shell|yaml)$/i.test(lingua) ? '#.*' : '\\/\\/.*|\\/\\*[\\s\\S]*?\\*\\/|<!--[\\s\\S]*?-->';
+      const re = new RegExp('(' + com + ')|("(?:\\\\.|[^"\\\\\\n])*"|\'(?:\\\\.|[^\'\\\\\\n])*\')|\\b(const|let|var|function|return|if|else|for|while|in|def|class|import|from|new|async|await|public|static|void|True|False|None|true|false|null)\\b|\\b(\\d+(?:\\.\\d+)?)\\b', 'g');
+      const codigo = pre.textContent;
+      let fim = 0;
+      pre.textContent = '';
+      for (const m of codigo.matchAll(re)) {
+        pre.append(codigo.slice(fim, m.index), elemento('span', m[1] ? 'c' : m[2] ? 's' : m[3] ? 'k' : 'n', m[0]));
+        fim = m.index + m[0].length;
+      }
+      pre.append(codigo.slice(fim));
+      const bloco = elemento('div', 'bloco'), topo = elemento('div', 'topo');
+      const copia = pre.nextSibling;
+      pre.before(bloco);
+      topo.append(elemento('span', '', lingua), copia);
+      bloco.append(topo, pre);
+    });
+  };
+  desenhar();
+})();
+</script>
+<!--/codigo-->
+<!--cheia--><script>(() => { const b = document.createElement("button"); b.type = "button"; b.textContent = "⛶"; b.onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen({ navigationUI: "show" }); document.querySelector("header").append(b); })();</script><!--/cheia-->
+<!--vp1-->
+<style>
+#menu{border:0;border-right:1px solid #a855f766;border-radius:0 26px 26px 0;background:linear-gradient(165deg,#1d0f3a,#0b0616 45%,#07030f);box-shadow:12px 0 50px #a855f740}
+#menu[open]{animation:entrar .35s cubic-bezier(.2,.9,.2,1)}
+#menu::backdrop{background:#05020abf;backdrop-filter:blur(5px)}
+@keyframes entrar{from{transform:translateX(-105%)}}
+@keyframes linha{from{opacity:0;transform:translateX(-24px)}}
+.marca{display:flex;align-items:center;gap:12px;padding:8px 46px 14px 2px}
+.marca svg{width:46px;height:46px;flex:none;filter:drop-shadow(0 0 9px #a855f7)}
+.marca b{display:block;letter-spacing:2px;color:#e9d5ff;font-size:14px}
+.marca small{color:#9d8fbb}
+#menu .nx{position:absolute;right:12px;width:38px;height:38px;min-width:0;margin:13px 0 0;padding:0;border-radius:50%}
+#abrirConfig{padding:13px;border-radius:16px;border:1px solid #a855f766;background:linear-gradient(120deg,#a855f740,#22d3ee26)}
+#menu p{font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:20px 4px 4px!important}
+.conversa{animation:linha .4s .05s backwards}
+.conversa:nth-child(2){animation-delay:.1s}.conversa:nth-child(3){animation-delay:.15s}.conversa:nth-child(n+4){animation-delay:.2s}
+.conversa button{border-radius:14px;background:#ffffff08;border-color:#ffffff12}
+.conversa.atual button:first-child{border-color:#a855f7;background:#a855f72b;box-shadow:inset 3px 0 #22d3ee}
+.conversa button:last-child{background:none;border-color:transparent;color:#9d8fbb}
+#config[open]{animation:linha .3s}
+#config{border-radius:24px;background:linear-gradient(165deg,#1d0f3a,#0a0514);accent-color:#a855f7}
+</style>
+<!--/vp1-->
+<!--vp2-->
+<style>
+.nyra-pop{background:linear-gradient(160deg,#26144a,#120a24)!important;border:1px solid #a855f777!important;border-radius:22px!important;box-shadow:0 18px 45px #000c,0 0 28px #a855f74d!important;padding:7px!important;width:min(320px,86vw)!important;box-sizing:border-box;animation:subir .3s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes subir{from{opacity:0;transform:translateY(16px) scale(.92)}}
+.pbox{font-size:0!important}
+.pbox>:not(.pensa){display:none!important}
+.pbox .pensa{display:flex;align-items:center;gap:12px;width:100%;height:auto;margin:0;padding:11px;text-align:left;background:none;border:0;border-radius:16px;color:#f3e8ff;box-shadow:none}
+.pensa i{font:21px/1 sans-serif;display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:14px;background:#a855f733}
+.pensa span{flex:1}.pensa b{display:block;font-size:15px}
+.pensa small{display:block;color:#ad9fcb;font-size:12px;font-weight:400;line-height:1.35;margin-top:3px}
+.pensa u{position:relative;width:44px;height:26px;flex:none;border-radius:20px;background:#ffffff24;transition:.25s}
+.pensa u::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.3s cubic-bezier(.3,1.5,.5,1)}
+.pensa.on u{background:linear-gradient(90deg,#a855f7,#22d3ee)}
+.pensa.on u::after{left:21px}
+.pensa.on i{animation:pensando 1.6s ease-in-out infinite}
+@keyframes pensando{50%{transform:scale(1.12);box-shadow:0 0 18px #a855f7}}
+</style>
+<!--/vp2-->
+<!--vp3-->
+<script>
+(() => {
+  const m = document.getElementById("menu"), x = m && m.querySelector("[data-fechar]"), l = document.getElementById("logo");
+  if (!x || !l) return;
+  x.textContent = "✕"; x.classList.add("nx");
+  const t = document.createElement("div"); t.className = "marca";
+  t.innerHTML = "<div><b>NYRA CODE AI</b><small>Beyond the code.</small></div>";
+  t.prepend(l.content.firstElementChild.cloneNode(true));
+  m.prepend(x, t);
+})();
+</script>
+<script>
+(() => {
+  const c = [...document.querySelectorAll("input[type=checkbox]")].find((c) => (c.closest("label") || c.parentElement).textContent.includes("Pensar mais"));
+  let box = c && c.parentElement;
+  while (box && !box.textContent.includes("mais profunda")) box = box.parentElement;
+  if (!box || box.contains(document.getElementById("campo"))) return;
+  const b = document.createElement("button"); b.type = "button"; b.className = "pensa";
+  b.innerHTML = "<i>🧠</i><span><b>Pensar mais</b><small>Faz uma análise mais profunda antes de responder.</small></span><u></u>";
+  const ver = () => b.classList.toggle("on", c.checked);
+  b.onclick = () => { c.click(); ver(); };
+  c.addEventListener("change", ver);
+  box.classList.add("pbox"); box.append(b); ver();
+})();
+</script>
+<!--/vp3-->
+<!--vp4-->
+<style>
+@keyframes flutuar{50%{transform:translateY(-10px);filter:drop-shadow(0 0 22px #a855f7)}}
+@keyframes brilho{to{background-position:-200% 0}}
+@keyframes pulso{50%{box-shadow:0 0 0 7px #a855f72b,0 0 26px #a855f7}}
+@keyframes piscar{50%{opacity:.4}}
+@keyframes chegar{from{opacity:0;transform:translateY(16px) scale(.96)}}
+.vazio{animation:chegar .6s cubic-bezier(.2,.9,.2,1)}
+.vazio svg{animation:flutuar 3.4s ease-in-out infinite;filter:drop-shadow(0 0 6px #a855f7aa)}
+.vazio h1{background:linear-gradient(90deg,#d8b4fe 25%,#22d3ee 50%,#d8b4fe 75%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:none!important;animation:brilho 3.5s linear infinite}
+#chat>div:not(.vazio):last-child{animation:chegar .35s ease-out}
+#caixa{transition:box-shadow .3s}
+#caixa:focus-within{box-shadow:0 0 0 1px #a855f7aa,0 0 26px #a855f755!important}
+#caixa:has(#campo:not(:placeholder-shown)) #enviar{animation:pulso 1.5s ease-in-out infinite}
+#processando{animation:piscar 1.2s ease-in-out infinite}
+</style>
+<script>
+addEventListener("pointerdown", (e) => {
+  const alvo = e.target.closest("button");
+  if (!alvo) return;
+  const o = document.createElement("div");
+  o.style.cssText = "position:fixed;z-index:99;pointer-events:none;width:26px;height:26px;margin:-13px;border-radius:50%;border:2px solid #22d3ee;left:" + e.clientX + "px;top:" + e.clientY + "px";
+  (alvo.closest("dialog") || document.body).append(o);
+  o.animate([{ transform: "scale(.4)", opacity: 1 }, { transform: "scale(3)", opacity: 0 }], { duration: 450, easing: "ease-out" }).onfinish = () => o.remove();
+});
+</script>
+<!--/vp4-->
+<!--azul--><style>*{-webkit-tap-highlight-color:transparent}</style><!--/azul-->
+<!--va1-->
+<style>
+#linhas{display:none!important}
+#linhas2{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.sem-anim *,.sem-anim *::before,.sem-anim *::after,.sem-anim ::backdrop{animation:none!important;transition:none!important}
+.sem-onda div[style*="z-index: 99"]{display:none!important}
+div[style*="z-index: 99"]{border-color:#22d3ee!important}
+#abrirVisual{padding:13px;border-radius:16px;border:1px solid #a855f766;background:linear-gradient(120deg,#22d3ee26,#a855f740)}
+#visual{margin:auto;width:min(360px,92vw);max-height:88dvh;overflow:auto;border-radius:24px;padding:18px;background:linear-gradient(165deg,#1d0f3a,#0a0514);accent-color:#a855f7}
+#visual::backdrop{background:#0007}
+#visual label{display:block;margin-top:14px}
+#visual label.liga{display:flex;justify-content:space-between;align-items:center}
+#visual input:not([type=checkbox]),#visual select{display:block;width:100%;margin-top:7px}
+#visual input[type=color]{height:42px;padding:4px;background:none;border:1px solid #a855f755;border-radius:12px}
+#v-cor{appearance:none;height:14px;border-radius:9px;background:linear-gradient(90deg,hsl(0 90% 60%),hsl(60 90% 60%),hsl(120 90% 60%),hsl(180 90% 60%),hsl(240 90% 60%),hsl(300 90% 60%),hsl(360 90% 60%))}
+#v-cor::-webkit-slider-thumb{appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 0 8px #000}
+#visual button{width:100%;margin-top:12px}
+</style>
+<!--/va1-->
+<!--va2-->
+<canvas id="linhas2"></canvas>
+<script>
+window.nyraPadrao = { cor: 271, anim: true, ritmo: 1, onda: true, linhas: true, c1: "#a855f7", c2: "#22d3ee", dir: "esquerda", vel: 1 };
+window.nyraV = Object.assign({}, nyraPadrao);
+try { Object.assign(nyraV, JSON.parse(localStorage.getItem("nyra-visual"))); } catch {}
+(() => {
+  const c = document.getElementById("linhas2"), x = c.getContext("2d");
+  let f = 0, antes = 0;
+  const desenho = (t) => {
+    requestAnimationFrame(desenho);
+    const v = nyraV, r = devicePixelRatio || 1, l = c.clientWidth, a = c.clientHeight;
+    f += Math.min(t - antes, 50) * v.vel; antes = t;
+    const w = Math.round(l * r), h = Math.round(a * r);
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    x.setTransform(r, 0, 0, r, 0, 0); x.clearRect(0, 0, l, a);
+    const sobe = v.dir === "cima" ? -1 : v.dir === "baixo" ? 1 : 0, lado = v.dir === "direita" ? 1 : -1, P = a + 60;
+    for (let i = 0; i < 7 && l; i++) {
+      const y = (((i + 0.5) * P / 7 + sobe * f * 0.035) % P + P) % P - 30, q = lado * f * (0.05 - i * 0.004);
+      x.beginPath();
+      for (let p = -3; p <= l + 3; p += 3) x.lineTo(p, y + Math.sin((p - q) / 70 + i) * 22 + Math.sin((p - q * 0.5) / 33) * 5);
+      for (const [g, forca] of [[9, "0d"], [4, "1c"], [1.2, "80"]]) { x.lineWidth = g; x.strokeStyle = (i % 3 ? v.c1 : v.c2) + forca; x.stroke(); }
+    }
+  };
+  requestAnimationFrame(desenho);
+})();
+</script>
+<!--/va2-->
+<!--va3-->
+<script>
+(() => {
+  const girar = (cor, r, g, b, a, d) => {
+    const M = Math.max(r, g, b), m = Math.min(r, g, b), D = M - m;
+    if (!D) return cor;
+    let h = 60 * (M === r ? ((g - b) / D + 6) % 6 : M === g ? (b - r) / D + 2 : (r - g) / D + 4);
+    if (h < 180 || h > 300) return cor;
+    const L = (M + m) / 510, S = D / 255 / (1 - Math.abs(2 * L - 1));
+    return "hsl(" + (h + d + 360) % 360 + " " + S * 100 + "% " + L * 100 + "% / " + a + ")";
+  };
+  const pintar = (css, d) => css.replace(/#([0-9a-f]{8}|[0-9a-f]{6}|[0-9a-f]{3,4})(?![\w-])/gi, (cor, n) => {
+    if (n.length < 5) n = [...n].map((k) => k + k).join("");
+    const [r, g, b, a = 255] = n.match(/../g).map((k) => parseInt(k, 16));
+    return girar(cor, r, g, b, a / 255, d);
+  }).replace(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/g, (cor, r, g, b, a = 1) => girar(cor, +r, +g, +b, a, d));
+  window.nyraPintar = pintar;
+})();
+</script>
+<dialog id=visual><h2>🎨 Aparência</h2>
+<label>Cor da interface<input type=range id=v-cor min=0 max=360></label>
+<label class=liga>Animações<input type=checkbox id=v-anim></label>
+<label>Velocidade das animações<input type=range id=v-ritmo min=0.3 max=2.5 step=0.1></label>
+<label class=liga>Onda no toque<input type=checkbox id=v-onda></label>
+<label class=liga>Linhas no fundo<input type=checkbox id=v-linhas></label>
+<label>Cor das linhas<input type=color id=v-c1></label>
+<label>Segunda cor das linhas<input type=color id=v-c2></label>
+<label>Direção das linhas<select id=v-dir><option value=esquerda>⬅️ Esquerda</option><option value=direita>➡️ Direita</option><option value=cima>⬆️ Cima</option><option value=baixo>⬇️ Baixo</option></select></label>
+<label>Velocidade das linhas<input type=range id=v-vel min=0 max=3 step=0.1></label>
+<button id=v-reset>↩️ Voltar ao padrão</button>
+<button id=v-ok>Salvar e fechar</button>
+</dialog>
+<!--/va3-->
+<!--va4-->
+<script>
+(() => {
+  const originais = new Map();
+  const pintar = window.nyraPintar;
+  const ritmar = () => document.getAnimations().forEach((a) => { if (a.animationName) a.playbackRate = nyraV.ritmo; });
+  document.addEventListener("animationstart", ritmar, true);
+  window.nyraAplicar = () => {
+    const d = nyraV.cor - 271, classes = document.documentElement.classList;
+    document.querySelectorAll("style").forEach((s) => {
+      if (!originais.has(s)) originais.set(s, s.textContent);
+      const novo = d ? pintar(originais.get(s), d) : originais.get(s);
+      if (s.textContent !== novo) s.textContent = novo;
+    });
+    const modelo = document.getElementById("logo");
+    [document, modelo && modelo.content].forEach((raiz) => raiz && raiz.querySelectorAll("svg [fill], svg [stroke]").forEach((e) => ["fill", "stroke"].forEach((n) => {
+      const o = e.getAttribute("data-" + n) || e.getAttribute(n);
+      if (!o || o[0] !== "#") return;
+      e.setAttribute("data-" + n, o); e.setAttribute(n, d ? pintar(o, d) : o);
+    })));
+    classes.toggle("sem-anim", !nyraV.anim); classes.toggle("sem-onda", !nyraV.onda);
+    document.getElementById("linhas2").style.display = nyraV.linhas ? "" : "none";
+    ritmar();
+  };
+})();
+</script>
+<!--/va4-->
+<!--va5-->
+<script>
+(() => {
+  const menu = document.getElementById("menu"), cfg = document.getElementById("abrirConfig");
+  if (!menu || !cfg) return;
+  const d = document.getElementById("visual");
+  const campos = Object.keys(nyraPadrao), el = (k) => document.getElementById("v-" + k);
+  const mostrar = () => campos.forEach((k) => el(k)[el(k).type === "checkbox" ? "checked" : "value"] = nyraV[k]);
+  const guardar = () => { try { localStorage.setItem("nyra-visual", JSON.stringify(nyraV)); } catch {} nyraAplicar(); };
+  campos.forEach((k) => el(k).addEventListener("input", () => {
+    const e = el(k);
+    nyraV[k] = e.type === "checkbox" ? e.checked : typeof nyraPadrao[k] === "number" ? Number(e.value) : e.value;
+    guardar();
+  }));
+  el("reset").onclick = () => { Object.assign(nyraV, nyraPadrao); mostrar(); guardar(); };
+  el("ok").onclick = () => d.close();
+  const b = document.createElement("button"); b.type = "button"; b.id = "abrirVisual"; b.textContent = "🎨 Aparência";
+  b.onclick = () => { menu.close(); mostrar(); d.showModal(); };
+  cfg.after(b);
+  nyraAplicar();
+})();
+</script>
+<!--/va5-->
+<!--icss-->
+<style>
+.ic{width:22px;height:22px;flex:none;fill:none;stroke:#e9d5ff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.so-ic{display:grid;place-items:center}
+#enviar .ic{stroke:white}
+#abrirConfig,#abrirVisual,#apagarTudo,#v-reset,#visual h2{display:flex;align-items:center;justify-content:center;gap:10px}
+#visual h2{justify-content:flex-start}
+#linguagem{flex:0 1 auto;width:auto;min-width:0}
+</style>
+<!--/icss-->
+<!--ijs-->
+<script>
+(() => {
+  const D = {
+    menu: "M4 7h16M4 12h10M4 17h16", mais: "M12 5v14M5 12h14", fechar: "M6 6l12 12M18 6 6 18",
+    cheia: "M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5",
+    foto: "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM3 17l5-5 5 5 3-3 5 5M15.5 8.5h.01",
+    config: "M4 7h10M18 7h2M16 5v4M4 17h2M10 17h10M8 15v4",
+    cor: "M12 3s7 7 7 12a7 7 0 0 1-14 0c0-5 7-12 7-12ZM9 15a3 3 0 0 0 3 3",
+    pensar: "M11 4l2 5 5 2-5 2-2 5-2-5-5-2 5-2ZM19 15v5M16.5 17.5h5",
+    lixo: "M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5",
+    voltar: "M5 10a7.5 7.5 0 1 1 1.5 7M4 4v6h6"
+  };
+  const por = (el, nome, texto) => {
+    if (!el) return;
+    el.innerHTML = "<svg class=ic viewBox=0,0,24,24><path></path></svg>";
+    el.querySelector("path").setAttribute("d", D[nome]);
+    if (texto) el.append(texto); else if (el.tagName === "BUTTON") el.classList.add("so-ic");
+  };
+  const um = (s) => document.querySelector(s);
+  document.querySelectorAll("button").forEach((b) => {
+    const t = b.textContent.trim();
+    if (t === "+") por(b, "mais"); else if (t === "⛶") por(b, "cheia");
+  });
+  por(um("#abrirMenu"), "menu"); por(um("#menu .nx"), "fechar"); por(um("#fotoBtn"), "foto");
+  por(um("#abrirConfig"), "config", "Configurações"); por(um("#abrirVisual"), "cor", "Aparência");
+  por(um("#apagarTudo"), "lixo", "Apagar todas as conversas"); por(um("#v-reset"), "voltar", "Voltar ao padrão");
+  por(um("#visual h2"), "cor", "Aparência"); por(um(".pensa i"), "pensar");
+  document.querySelectorAll("#v-dir option").forEach((o) => o.textContent = o.value[0].toUpperCase() + o.value.slice(1));
+  const auto = um("#linguagem option"); if (auto) auto.textContent = "Automática";
+  if (window.nyraAplicar) nyraAplicar();
+})();
+</script>
+<!--/ijs-->
+<!--fcss-->
+<style>
+#fotoBtn{display:grid;place-items:center;flex:none;width:44px;height:44px;min-width:0;margin:0;padding:0;border-radius:50%;font-size:20px}
+#fotoPrev{display:none;position:relative;width:max-content;margin:0 0 8px}
+#fotoPrev img{display:block;height:74px;max-width:200px;object-fit:cover;border-radius:14px;border:1px solid #a855f7aa}
+#fotoPrev button{position:absolute;top:-8px;right:-10px;width:28px;height:28px;min-width:0;padding:0;border-radius:50%;background:#1d0f3a;font-size:13px}
+.minha-foto{display:block;max-width:65%;max-height:240px;margin:8px 0 0 auto;border-radius:16px;border:1px solid #a855f766}
+</style>
+<script>
+(() => {
+  const chat = document.getElementById("chat"), vistas = new Map();
+  new MutationObserver(() => chat.querySelectorAll(".user").forEach((u) => {
+    const i = u.querySelector(".minha-foto");
+    if (i) vistas.set(u.textContent, i);
+    else if (vistas.has(u.textContent)) u.append(vistas.get(u.textContent).cloneNode());
+  })).observe(chat, { childList: true, subtree: true });
+})();
+</script>
+<!--/fcss-->
+<!--fjs-->
+<script>
+(() => {
+  const enviar = document.getElementById("enviar"), campo = document.getElementById("campo"), caixa = document.getElementById("caixa");
+  const arq = document.createElement("input"); arq.type = "file"; arq.accept = "image/*"; arq.hidden = true;
+  const b = document.createElement("button"); b.type = "button"; b.id = "fotoBtn"; b.textContent = "🖼️";
+  const prev = document.createElement("div"); prev.id = "fotoPrev"; prev.innerHTML = "<img alt=Foto><button type=button>✕</button>";
+  caixa.prepend(prev); enviar.before(b); document.body.append(arq);
+  let foto = null;
+  const por = (f) => { foto = f; prev.style.display = f ? "block" : "none"; if (f) prev.firstChild.src = f; };
+  b.onclick = () => arq.click();
+  prev.lastChild.onclick = () => por(null);
+  arq.onchange = async () => {
+    const f = arq.files[0]; arq.value = ""; if (!f) return;
+    try {
+      const img = await createImageBitmap(f), e = Math.min(1, 1600 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas"); c.width = img.width * e; c.height = img.height * e;
+      const x = c.getContext("2d"); x.fillStyle = "white"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      por(c.toDataURL("image/jpeg", 0.85));
+    } catch { return alert("Não consegui abrir essa imagem"); }
+    if (!campo.value.trim()) { campo.value = "Analisa essa imagem"; campo.dispatchEvent(new Event("input")); }
+  };
+  const antigo = window.fetch;
+  window.fetch = (url, op) => {
+    if (!foto || !String(url).endsWith("/chat")) return antigo(url, op);
+    const corpo = JSON.parse(op.body); corpo.imagem = foto;
+    const minha = [...document.querySelectorAll("#chat .user")].pop();
+    if (minha) { const i = document.createElement("img"); i.className = "minha-foto"; i.src = foto; minha.append(i); }
+    por(null);
+    return antigo("/imagem", { ...op, body: JSON.stringify(corpo) });
+  };
+  if (window.nyraAplicar) nyraAplicar();
+})();
+</script>
+<!--/fjs-->
 </body>
 </html>
