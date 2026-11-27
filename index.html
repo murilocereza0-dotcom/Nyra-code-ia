@@ -810,7 +810,7 @@ try { Object.assign(nyraV, JSON.parse(localStorage.getItem("nyra-visual"))); } c
     const t = b.textContent.trim();
     if (t === "+") por(b, "mais"); else if (t === "⛶") por(b, "cheia");
   });
-  por(um("#abrirMenu"), "menu"); por(um("#menu .nx"), "fechar"); por(um("#fotoBtn"), "foto");
+  por(um("#abrirMenu"), "menu"); por(um("#menu .nx"), "fechar"); 
   por(um("#abrirConfig"), "config", "Configurações"); por(um("#abrirVisual"), "cor", "Aparência");
   por(um("#apagarTudo"), "lixo", "Apagar todas as conversas"); por(um("#v-reset"), "voltar", "Voltar ao padrão");
   por(um("#visual h2"), "cor", "Aparência"); por(um(".pensa i"), "pensar");
@@ -844,7 +844,7 @@ try { Object.assign(nyraV, JSON.parse(localStorage.getItem("nyra-visual"))); } c
 (() => {
   const enviar = document.getElementById("enviar"), campo = document.getElementById("campo"), caixa = document.getElementById("caixa");
   const arq = document.createElement("input"); arq.type = "file"; arq.accept = "image/*"; arq.hidden = true;
-  const b = document.createElement("button"); b.type = "button"; b.id = "fotoBtn"; b.textContent = "🖼️";
+  const b = document.createElement("button"); b.type = "button"; b.id = "fotoBtn"; b.innerHTML = "<svg class=ic viewBox=0,0,24,24><path d=M12,2l8.7,5v10L12,22l-8.7,-5V7Z></path><path d=M6,16l4,-5l3,3.500l2,-2l3,3.500></path><path d=M15.5,6.2l1.8,1.8l-1.8,1.8l-1.8,-1.8Z fill=#22d3ee style=stroke:none></path></svg>";
   const prev = document.createElement("div"); prev.id = "fotoPrev"; prev.innerHTML = "<img alt=Foto><button type=button>✕</button>";
   caixa.prepend(prev); enviar.before(b); document.body.append(arq);
   let foto = null;
