@@ -1,3 +1,6 @@
+require("./rota.js");
+require("./cerebro.js");
+require("./conserta.js");
 require("./imagem.js");
 /*estilo*/
 const fetchAntigo = globalThis.fetch;
@@ -23,15 +26,18 @@ const PORTA = process.env.PORT || 3000;
 const URL_API = process.env.NYRA_URL || 'https://api.groq.com/openai/v1/chat/completions';
 const MODELO = process.env.NYRA_MODELO || 'openai/gpt-oss-120b';
 
-const lerChave = () => process.env.NYRA_API_KEY || (() => {
-  try {
-    return fs.readFileSync(path.join(__dirname, 'chave.txt'), 'utf8').trim();
-  } catch {
-    return '';
-  }
-})();
+const lerChave = () =>
+  process.env.OPENROUTER_API_KEY ||
+  process.env.NYRA_API_KEY ||
+  (() => {
+    try {
+      return fs.readFileSync(path.join(__dirname, "chave.txt"), "utf8").trim();
+    } catch {
+      return "";
+    }
+  })();
 
-const SISTEMA = 'Você é a NYRA CODE AI, uma assistente de programação criada por Murilo com a ajuda do Claude. Responda em português do Brasil. Coloque código em blocos com três crases. Se não souber algo, diga que não sabe.';
+const SISTEMA = 'Você é a NYRA CODE AI, uma assistente de programação criada por Murilo com a ajuda do claude. Responda em português do Brasil. Coloque código em blocos com três crases. Se não souber algo, diga que não sabe.';
 
 const TAMANHOS = {
   curta: ['Responda de forma bem curta.', 1200],
@@ -53,9 +59,8 @@ async function chamarIA(mensagens, signal, limite, criatividade) {
       messages: mensagens,
       stream: false,
       temperature: criatividade,
-      reasoning_effort: 'low',
-      include_reasoning: false,
-      max_completion_tokens: limite
+      reasoning: { effort: "low" },
+      max_tokens: limite
     })
   });
 
@@ -161,77 +166,22 @@ http.createServer(async (req, res) => {
 
     // MODO NYRA THINK
     if (pedido.pensar === true) {
-      timer = setTimeout(() => {
-        tempoEsgotado = true;
-        parar.abort();
-      }, 60000);
-
-      // Primeira resposta
-      let resposta = await chamarIA(
-        [{ role: 'system', content: sistema }, ...historico],
-        parar.signal,
-        limite,
-        criatividade
-      );
-
-      // Até duas rodadas de revisão
-      let rodadas = 0;
-
-      for (let i = 0; i < 2; i++) {
-        const instrucao = `
-Você é o revisor técnico da NYRA CODE AI.
-
-Revise cuidadosamente a resposta abaixo.
-Procure erros factuais, matemáticos, lógicos e de programação.
-Confira compatibilidade entre linguagens, bibliotecas e APIs.
-Não invente testes que não foram executados.
-
-Se encontrar erros, devolva a resposta inteira corrigida.
-Se estiver correta, devolva exatamente a resposta original.
-Não escreva comentários sobre a revisão.
-Não acrescente introduções ou explicações sobre o processo.
-
-PERGUNTA ORIGINAL:
-${historico[historico.length - 1]?.content || ''}
-
-RESPOSTA PARA REVISAR:
-${resposta}
-`;
-
-        const revisada = await chamarIA(
-          [
-            {
-              role: 'system',
-              content: 'Você é um revisor rigoroso de respostas técnicas.'
-            },
-            { role: 'user', content: instrucao }
-          ],
-          parar.signal,
-          Math.min(5000, limite + 1000),
-          0.1
-        );
-
-        rodadas++;
-
-        if (revisada.trim() === resposta.trim()) break;
-
-        resposta = revisada;
+      const inicio = Date.now();
+      let resposta = await chamarIA([{ role: "system", content: sistema }, ...historico], parar.signal, limite, criatividade);
+      let feitas = 0, mudou = 0;
+      while (feitas < 3 && Date.now() - inicio < 90000) {
+        const instrucao = "Revise a resposta abaixo procurando erros de lógica, de código, de fatos e partes faltando. Se estiver correta, escreva somente APROVADA. Se tiver erro, escreva a resposta inteira corrigida, sem comentar a revisão." +
+          "\n\nPERGUNTA:\n" + historico[historico.length - 1].content + "\n\nRESPOSTA:\n" + resposta;
+        try {
+          const revisada = await chamarIA([{ role: "system", content: "Você é um revisor técnico rigoroso." }, { role: "user", content: instrucao }], parar.signal, limite, 0.1);
+          feitas++;
+          if (revisada.trim().startsWith("APROVADA")) break;
+          resposta = revisada;
+          mudou++;
+        } catch (e) { if (parar.signal.aborted) throw e; console.log("Revisao parou: " + e.message); break; }
       }
-
-      clearTimeout(timer);
-
-      if (parar.signal.aborted) return;
-
-      res.writeHead(200, {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-store'
-      });
-
-      return res.end(
-        '🧠 Nyra Think: resposta revisada em ' +
-        rodadas + ' rodada(s). Código não executado automaticamente.\n\n' +
-        resposta
-      );
+      res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+      return res.end(resposta + "\n\n---\nRevisões feitas: " + feitas + " (com correção: " + mudou + ")");
     }
 
     // MODO NORMAL COM STREAMING
@@ -247,9 +197,8 @@ ${resposta}
         messages: [{ role: 'system', content: sistema }, ...historico],
         stream: true,
         temperature: criatividade,
-        reasoning_effort: 'low',
-        include_reasoning: false,
-        max_completion_tokens: limite
+        reasoning: { effort: "low" },
+      max_tokens: limite
       })
     });
 
